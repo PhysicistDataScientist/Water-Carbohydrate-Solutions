@@ -1,3 +1,5 @@
-# Water-Carbohydrate-Solutions
+# Welcome to "Water Carbohydrate Solutions" repository!
 
-A scientific paper was published regarding this experiment: Eduardo A. V. Souza, Jonas H. Osório, Cristiano M. B. Cordeiro, "Characterizing an inhomogeneous water-carbohydrate solution using its optical activity". SBFoton 2023.
+In this repository you will find scientific work involving inhomogeneous water-carbohydrate solutions.
+
+A scientific paper about this repository analysis was published and can be accessed in https://ieeexplore.ieee.org/abstract/document/10230916?casa_token=QxSmVWdpSW0AAAAA:sD95U-nwPNN_3jvojSdr61SM2kLaUqURmZCSiBiFT9gicCATZMpfmpaC3u9jAn1qpPEJd1Rhf5qr.
