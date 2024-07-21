@@ -3,7 +3,11 @@
 Overview: Study on the concentration and refrative index profile of inhomogeneous water-carbohydrate solutions.
 
 Contents:
-- "":
+- "Data - Calibration.xlsx":
+- "Data - Handbook.xlsx":
+- "Data - Varying Height Sucrose.xlsx":
+- "Solution Analyser.py":
+- "Path Manager.txt":
 
 Instructions:
 1) 
