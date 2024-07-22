@@ -9,11 +9,13 @@ Objectives:
 - Convert the concentration profile into refractive index.
 
 Contents:
-- "Data - Calibration.xlsx": Excel sheet with the data to calculate the specific rotation coefficient of some carbohydrates;
-- "Data - Handbook.xlsx": Excel sheet with the data relating concentration and refractive index;
-- "Data - Varying Height - Sucrose.xlsx": Excel sheet with the data of the height profile of an inhomegenous solution; 
-- "Solution Analyser.py": Python code to run the analysis;
-- "Path Manager.txt": File with the path location of the folder with the experimental data sheets.
+- "Experimental Data": Folder corresponding to the experimental data;
+  - "Data - Calibration.xlsx": Excel sheet with the data to calculate the specific rotation coefficient of some carbohydrates;
+  - "Data - Handbook.xlsx": Excel sheet with the data relating concentration and refractive index;
+  - "Data - Varying Height - Sucrose.xlsx": Excel sheet with the data of the height profile of an inhomegenous solution;
+- "Solution Analyser": Folder corresponding to the program analyser;
+  - "Solution Analyser.py": Python code to run the analysis;
+  - "Path Manager.txt": File with the path location of the folder with the experimental data sheets.
 
 Instructions:
 1) Put "Data - Calibration.xlsx", "Data - Handbook.xlsx" and "Data - Varying Height.xlsx" in the same folder;
