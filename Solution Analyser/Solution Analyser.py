@@ -1,13 +1,13 @@
 # Comments:
 '''
-- Implement the C x dt graphic.
+- None.
 '''
 
 # Libraries:
 from random import random
 from os import listdir
 from os.path import exists, join
-from pandas import ExcelFile, ExcelWriter, read_excel, DataFrame
+from pandas import ExcelFile, ExcelWriter, read_excel, DataFrame, concat, pivot_table
 from matplotlib.pyplot import subplots, show
 from scipy.odr import ODR, Model, RealData 
 from scipy.optimize import curve_fit
@@ -106,14 +106,9 @@ def get_specific_rotation():
     ax.set_xlabel('Concentration [g/ml]', loc='center', fontsize=14)
     ax.set_ylabel('Angle displacement [°]', loc='center', fontsize=14)
     ax.tick_params(axis='both', which='major', labelsize=12)
-    ## Select the colors:
-    colors = list() 
-    for i in range(len(sheets)):
-        color = (random(), random(), random())
-        colors.append(color)
     ## For each sheet:
-    df_cal = DataFrame(data = {'Carbohydrate': [], 'alpha [ml/(g.dm)]': [], 'ualpha [ml/(g.dm)]': []})
-    for (i, (sheet, color)) in enumerate(zip(sheets, colors)):
+    df_cal = DataFrame()
+    for i, sheet in enumerate(sheets):
         # Reading data:
         df = read_excel(path, sheet_name=sheet)
         C, dTheta = df.loc[:, 'C [g/ml]'].values, df.loc[:, 'dTheta [°]'].values
@@ -137,6 +132,7 @@ def get_specific_rotation():
         df_cal.loc[i, 'Carbohydrate'] = sheet.capitalize()
         df_cal.loc[i, 'alpha [ml/(g.dm)]'], df_cal.loc[i, 'ualpha [ml/(g.dm)]'] = alpha, ualpha
         # Plot:
+        color = (random(), random(), random())
         ax.errorbar(C, dTheta, xerr=uC, yerr=udTheta, marker='.', ms=20, mec='black', mfc=color, linestyle='none', lw=2, ecolor='black', capsize=5, label=f'{sheet.capitalize()}')
         ax.plot(C, dTheta_pred, c=color, lw=2, linestyle='solid')
     ax.legend(loc='lower left', fontsize=12)
@@ -192,17 +188,11 @@ def analysis(df_han, f, uf):
         axn.set_xlabel('Height [cm]', loc='center', fontsize=14)
         axn.set_ylabel('Refractive index', loc='center', fontsize=14)
         axn.tick_params(axis='both', which='major', labelsize=12)
-        # Read the sheet data:
+        ## Initialization of data frames:
+        df_paramsC, df_paramsn, df_time = DataFrame(), DataFrame(), DataFrame(columns = ['Day', 'h [cm]', 'C [g/ml]'])
+        ## Read the sheet data:
         sheets = ExcelFile(path).sheet_names
-        ## Select the colors:
-        colors = list() 
-        for i in range(len(sheets)):
-            color = (random(), random(), random())
-            colors.append(color)
-        ## Initialize the regression parameters:
-        df_paramsC, df_paramsn = DataFrame(), DataFrame()
-        ## For each sheet:
-        for (i, (sheet, color)) in enumerate(zip(sheets, colors)):
+        for (i, sheet) in enumerate(sheets):
             # Reading data:
             day = int(sheet.strip().replace('Day',''))
             df = read_excel(path, sheet_name=sheet)
@@ -210,6 +200,9 @@ def analysis(df_han, f, uf):
             C = dTheta / (alpha * L)
             uC = (udTheta**2 + dTheta**2 * ((ualpha / alpha)**2 + (uL / L)**2))**0.5 / (alpha * L)
             n, un = f(C), uf(C, uC)
+            for (h_, C_) in zip(h, C):
+                new_df = DataFrame(data={'Day': [day], 'h [cm]': [h_], 'C [g/ml]': [C_]})
+                df_time = concat([df_time, new_df], ignore_index=True)
             # Regression:
             def fit_function(p, x):
                 a, b, c, d = p
@@ -241,6 +234,7 @@ def analysis(df_han, f, uf):
             df_paramsn.loc[i, 'c [cm]'], df_paramsn.loc[i, 'uc [cm]'] = c, uc
             df_paramsn.loc[i, 'd'], df_paramsn.loc[i, 'ud'] = d, ud
             # Plot:
+            color = (random(), random(), random())
             ## Concentration:
             axC.errorbar(h, C, xerr=uh, yerr=uC, marker='.', ms=20, mec='black', mfc=color, linestyle='none', lw=2, ecolor='black', capsize=5, label=sheet)
             axC.plot(h, C_pred, c=color, lw=2, linestyle='solid')
@@ -252,6 +246,34 @@ def analysis(df_han, f, uf):
         # Statistical analysis of the regression coefficients:
         df_statsC = df_paramsC.describe().loc[['mean', 'std'], ['a [g/ml]', 'b [g/ml]', 'c [cm]', 'd']]
         df_statsn = df_paramsn.describe().loc[['mean', 'std'], ['a', 'b', 'c [cm]', 'd']]
+        # Time evolution:
+        df_time = pivot_table(df_time, values='C [g/ml]', index='h [cm]', columns='Day')
+        figt, axt = subplots(nrows=1, ncols=1, layout='constrained', figsize=(6,4))
+        axt.set_xlabel('Height [cm]', loc='center', fontsize=14)
+        axt.set_ylabel('Concentration [g/ml]', loc='center', fontsize=14)
+        axt.tick_params(axis='both', which='major', labelsize=12)
+        h_values = df_time.index
+        N = len(h_values)
+        ind = (N - 1)// 2
+        for h in h_values:
+            if (h == h_values[0]) or (h == h_values[-1]) or (h == h_values[ind]): 
+                # Reading the data:
+                dt = df_time.columns.values
+                C = df_time.loc[h, :].values
+                # Regression:
+                def fit_function(x, a, b):
+                    return a * x + b
+                params, covariance = curve_fit(fit_function, dt, C)
+                a, b = params
+                ua, ub = covariance[0, 0], covariance[1, 1]
+                C_pred = fit_function(dt, a, b)
+                # Plot:
+                color = (random(), random(), random())
+                axt.scatter(dt, C, s=80, c=color, label=h)
+                axt.plot(dt, C_pred, c=color, lw=2, linestyle='solid')
+        axt.legend(title='h [cm]', loc='best', fontsize=12, title_fontsize=12)
+        show()
+        # Save the plots and tables:
         if save:
             # Concetration:
             figC.savefig(join(folder, f'Graphic - Concentration Profile - {carbohydrate}.png'))
@@ -263,6 +285,8 @@ def analysis(df_han, f, uf):
             with ExcelWriter(join(folder, f'Table - Refractive Index Profile - {carbohydrate}.xlsx'), engine='openpyxl') as writer:
                 df_paramsn.to_excel(writer, sheet_name='Params', index=False)
                 df_statsn.to_excel(writer, sheet_name='Stats', index=False)
+            # Time evlolution:
+            figt.savefig(join(folder, f'Graphic - Concentration Time Evolution.png'))
 ## Ask if the user wants to stop the program: 
 def ask_stop():
     while True:
